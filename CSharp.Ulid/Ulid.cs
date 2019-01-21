@@ -5,6 +5,8 @@ namespace CSharp.Ulid
 {
     public struct Ulid : IComparable, IComparable<Ulid>, IEquatable<Ulid>
     {
+        private const int VALID_ULID_STRING_LENGTH = 26;
+
         public byte TimeStamp_0 { get; set; }
         public byte TimeStamp_1 { get; set; }
         public byte TimeStamp_2 { get; set; }
@@ -12,7 +14,25 @@ namespace CSharp.Ulid
         public byte TimeStamp_4 { get; set; }
         public byte TimeStamp_5 { get; set; }
 
-        public long TimeStamp { get; set; }
+        public long TimeStamp
+        {
+            get
+            {
+                long t0 = TimeStamp_0;
+                long t1 = TimeStamp_1;
+                long t2 = TimeStamp_2;
+                long t3 = TimeStamp_3;
+                long t4 = TimeStamp_4;
+                long t5 = TimeStamp_5;
+
+                return (t0 << 40)
+                    | (t1 << 32)
+                    | (t2 << 24)
+                    | (t3 << 16)
+                    | (t4 << 8)
+                    | (t5);
+            }
+        }
 
         public byte Randomness_0 { get; set; }
         public byte Randomness_1 { get; set; }
@@ -74,13 +94,12 @@ namespace CSharp.Ulid
 
                 return new Ulid
                 {
-                    TimeStamp_0 = (byte)(timestamp & TIMESTAMP_MASK_0 >> 0),
-                    TimeStamp_1 = (byte)(timestamp & TIMESTAMP_MASK_1 >> 8),
-                    TimeStamp_2 = (byte)(timestamp & TIMESTAMP_MASK_2 >> 16),
-                    TimeStamp_3 = (byte)(timestamp & TIMESTAMP_MASK_3 >> 24),
-                    TimeStamp_4 = (byte)(timestamp & TIMESTAMP_MASK_4 >> 32),
-                    TimeStamp_5 = (byte)(timestamp & TIMESTAMP_MASK_5 >> 40),
-                    TimeStamp = timestamp,
+                    TimeStamp_0 = (byte)((timestamp & TIMESTAMP_MASK_5) >> 40),
+                    TimeStamp_1 = (byte)((timestamp & TIMESTAMP_MASK_4) >> 32),
+                    TimeStamp_2 = (byte)((timestamp & TIMESTAMP_MASK_3) >> 24),
+                    TimeStamp_3 = (byte)((timestamp & TIMESTAMP_MASK_2) >> 16),
+                    TimeStamp_4 = (byte)((timestamp & TIMESTAMP_MASK_1) >> 8),
+                    TimeStamp_5 = (byte)((timestamp & TIMESTAMP_MASK_0) >> 0),
                     Randomness_0 = randomness[0],
                     Randomness_1 = randomness[1],
                     Randomness_2 = randomness[2],
@@ -326,6 +345,91 @@ namespace CSharp.Ulid
         public static explicit operator byte[] (Ulid ulid)
         {
             return ulid.ToByteArray();
+        }
+
+        public static bool TryParse(string input, out Ulid ulid)
+        {
+            if (input == null)
+            {
+                ulid = default(Ulid);
+                return false;
+            }
+
+            if (input.Length != VALID_ULID_STRING_LENGTH)
+            {
+                ulid = default(Ulid);
+                return false;
+            }
+
+            input = input.ToUpperInvariant();
+
+            int[] index = new int[VALID_ULID_STRING_LENGTH];
+
+            for (int i = 0; i < VALID_ULID_STRING_LENGTH; ++i)
+            {
+                char c = input[i];
+                bool found = false;
+
+                for (int v = 0; v < CrockfordsBase32.Length; ++v)
+                {
+                    if (CrockfordsBase32[v] == c)
+                    {
+                        index[i] = v;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    ulid = default(Ulid);
+                    return false;
+                }
+            }
+
+            /*
+             * // timestamp
+             * ulid.data[0] = (dec[int(str[0])] << 5) | dec[int(str[1])];
+             * ulid.data[1] = (dec[int(str[2])] << 3) | (dec[int(str[3])] >> 2);
+             * ulid.data[2] = (dec[int(str[3])] << 6) | (dec[int(str[4])] << 1) | (dec[int(str[5])] >> 4);
+             * ulid.data[3] = (dec[int(str[5])] << 4) | (dec[int(str[6])] >> 1);
+             * ulid.data[4] = (dec[int(str[6])] << 7) | (dec[int(str[7])] << 2) | (dec[int(str[8])] >> 3);
+             * ulid.data[5] = (dec[int(str[8])] << 5) | dec[int(str[9])];
+             * ulid.data[6] = (dec[int(str[10])] << 3) | (dec[int(str[11])] >> 2);
+             * ulid.data[7] = (dec[int(str[11])] << 6) | (dec[int(str[12])] << 1) | (dec[int(str[13])] >> 4);
+             * ulid.data[8] = (dec[int(str[13])] << 4) | (dec[int(str[14])] >> 1);
+             * ulid.data[9] = (dec[int(str[14])] << 7) | (dec[int(str[15])] << 2) | (dec[int(str[16])] >> 3);
+             * ulid.data[10] = (dec[int(str[16])] << 5) | dec[int(str[17])];
+             * ulid.data[11] = (dec[int(str[18])] << 3) | (dec[int(str[19])] >> 2);
+             * ulid.data[12] = (dec[int(str[19])] << 6) | (dec[int(str[20])] << 1) | (dec[int(str[21])] >> 4);
+             * ulid.data[13] = (dec[int(str[21])] << 4) | (dec[int(str[22])] >> 1);
+             * ulid.data[14] = (dec[int(str[22])] << 7) | (dec[int(str[23])] << 2) | (dec[int(str[24])] >> 3);
+             * ulid.data[15] = (dec[int(str[24])] << 5) | dec[int(str[25])];
+             */
+
+            //01D1R8YYT5BHVZ1MBM8RHG35AD
+            //01D1R8YYT5BHVF1MBM8RHG35AD
+            ulid = new Ulid
+            {
+                TimeStamp_0 = (byte)(index[0] << 5 | index[1]),
+                TimeStamp_1 = (byte)(index[2] << 3 | index[3] >> 2),
+                TimeStamp_2 = (byte)(index[3] << 6 | index[4] << 1 | index[5] >> 4),
+                TimeStamp_3 = (byte)(index[5] << 4 | index[6] >> 1),
+                TimeStamp_4 = (byte)(index[6] << 7 | index[7] << 2 | index[8] >> 3),
+                TimeStamp_5 = (byte)(index[8] << 5 | index[9]),
+                Randomness_0 = (byte)(index[10] << 3 | index[11] >> 2),
+                Randomness_1 = (byte)(index[11] << 6 | index[12] << 1 | index[13] >> 4),
+                Randomness_2 = (byte)(index[13] << 4 | index[14] >> 1),
+                Randomness_3 = (byte)(index[14] << 7 | index[15] << 2 | index[16] >> 3),
+                Randomness_4 = (byte)(index[16] << 5 | index[17]),
+                Randomness_5 = (byte)(index[18] << 3 | index[19] >> 2),
+                Randomness_6 = (byte)(index[19] << 6 | index[20] << 1 | index[21] >> 4),
+                Randomness_7 = (byte)(index[21] << 4 | index[22] >> 1),
+                Randomness_8 = (byte)(index[22] << 7 | index[23] << 2 | index[24] >> 3),
+                Randomness_9 = (byte)(index[24] << 5 | index[25]),
+            };
+
+            return true;
         }
     }
 }
