@@ -61,6 +61,79 @@ namespace CSharp.Ulid
         private const long TIMESTAMP_MASK_4 = 1095216660480;
         private const long TIMESTAMP_MASK_5 = 280375465082880;
 
+        public Ulid(long timestamp, byte[] randomness)
+            : this(new byte[]
+            {
+                (byte)((timestamp & TIMESTAMP_MASK_5) >> 40),
+                (byte)((timestamp & TIMESTAMP_MASK_4) >> 32),
+                (byte)((timestamp & TIMESTAMP_MASK_3) >> 24),
+                (byte)((timestamp & TIMESTAMP_MASK_2) >> 16),
+                (byte)((timestamp & TIMESTAMP_MASK_1) >> 8),
+                (byte)((timestamp & TIMESTAMP_MASK_0) >> 0)},
+            randomness)
+        {
+        }
+
+        public Ulid(byte[] timestamp, byte[] randomness)
+        {
+            const int TIMESTAMP_LENGTH = 6;
+            const int RANDOMNESS_LENGTH = 10;
+
+            if (timestamp.Length != TIMESTAMP_LENGTH)
+            {
+                throw new ArgumentException($"Expected a length of {TIMESTAMP_LENGTH}, received {timestamp.Length}", nameof(timestamp));
+            }
+
+            if(randomness.Length != RANDOMNESS_LENGTH)
+            {
+                throw new ArgumentException($"Expected a length of {RANDOMNESS_LENGTH}, received {randomness.Length}", nameof(randomness));
+            }
+
+            TimeStamp_0 = timestamp[0];
+            TimeStamp_1 = timestamp[1];
+            TimeStamp_2 = timestamp[2];
+            TimeStamp_3 = timestamp[3];
+            TimeStamp_4 = timestamp[4];
+            TimeStamp_5 = timestamp[5];
+            Randomness_0 = randomness[0];
+            Randomness_1 = randomness[1];
+            Randomness_2 = randomness[2];
+            Randomness_3 = randomness[3];
+            Randomness_4 = randomness[4];
+            Randomness_5 = randomness[5];
+            Randomness_6 = randomness[6];
+            Randomness_7 = randomness[7];
+            Randomness_8 = randomness[8];
+            Randomness_9 = randomness[9];
+        }
+
+        public Ulid(byte[] data)
+        {
+            const int DATA_LENGHT = 16;
+
+            if (data.Length != DATA_LENGHT)
+            {
+                throw new ArgumentException($"Expected a length of {DATA_LENGHT}, received {data.Length}", nameof(data));
+            }
+
+            TimeStamp_0 = data[0];
+            TimeStamp_1 = data[1];
+            TimeStamp_2 = data[2];
+            TimeStamp_3 = data[3];
+            TimeStamp_4 = data[4];
+            TimeStamp_5 = data[5];
+            Randomness_0 = data[6];
+            Randomness_1 = data[7];
+            Randomness_2 = data[8];
+            Randomness_3 = data[9];
+            Randomness_4 = data[10];
+            Randomness_5 = data[11];
+            Randomness_6 = data[12];
+            Randomness_7 = data[13];
+            Randomness_8 = data[14];
+            Randomness_9 = data[15];
+        }
+
         public static Ulid NewUlid()
         {
             /*
@@ -92,7 +165,8 @@ namespace CSharp.Ulid
                 LastUsedTimeStamp = timestamp;
                 randomness.CopyTo(LastUsedRandomness, 0);
 
-                return new Ulid
+                //Use explicit version, as the constructor have bounds checks
+                return new Ulid()
                 {
                     TimeStamp_0 = (byte)((timestamp & TIMESTAMP_MASK_5) >> 40),
                     TimeStamp_1 = (byte)((timestamp & TIMESTAMP_MASK_4) >> 32),
