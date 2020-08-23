@@ -109,11 +109,11 @@ namespace CSharp.Ulid
 
         public Ulid(byte[] data)
         {
-            const int DATA_LENGHT = 16;
+            const int DATA_LENGTH = 16;
 
-            if (data.Length != DATA_LENGHT)
+            if (data.Length != DATA_LENGTH)
             {
-                throw new ArgumentException($"Expected a length of {DATA_LENGHT}, received {data.Length}", nameof(data));
+                throw new ArgumentException($"Expected a length of {DATA_LENGTH}, received {data.Length}", nameof(data));
             }
 
             TimeStamp_0 = data[0];
@@ -423,15 +423,15 @@ namespace CSharp.Ulid
 
         public static bool TryParse(string input, out Ulid ulid)
         {
-            if (input == null)
+            if (input is null)
             {
-                ulid = default(Ulid);
+                ulid = default;
                 return false;
             }
 
             if (input.Length != VALID_ULID_STRING_LENGTH)
             {
-                ulid = default(Ulid);
+                ulid = default;
                 return false;
             }
 
@@ -456,7 +456,7 @@ namespace CSharp.Ulid
 
                 if (!found)
                 {
-                    ulid = default(Ulid);
+                    ulid = default;
                     return false;
                 }
             }
