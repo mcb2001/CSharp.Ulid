@@ -1,16 +1,15 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Xunit;
 using System.Threading;
 
 namespace CSharp.Ulid.Tests
 {
-    [TestClass]
-    public class UlidTests
+    public class UlidTest
     {
         private const int ULID_LENGTH = 26;
         private const int TEST_COUNT = 1000;
         private readonly Ulid[] ulids = new Ulid[TEST_COUNT];
 
-        public UlidTests()
+        public UlidTest()
         {
             for (int i = 0; i < TEST_COUNT / 2; ++i)
             {
@@ -25,7 +24,7 @@ namespace CSharp.Ulid.Tests
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void TestGenerate()
         {
             for (int i = 0; i < TEST_COUNT - 1; ++i)
@@ -34,37 +33,37 @@ namespace CSharp.Ulid.Tests
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void TestTryParseExceptions()
         {
             //one too few chars
-            Assert.IsFalse(Ulid.TryParse("0000000000000000000000000", out Ulid error0));
+            Assert.False(Ulid.TryParse("0000000000000000000000000", out _));
 
             //one too many chars
-            Assert.IsFalse(Ulid.TryParse("000000000000000000000000000", out Ulid error1));
+            Assert.False(Ulid.TryParse("000000000000000000000000000", out _));
 
             //null
-            Assert.IsFalse(Ulid.TryParse(null, out Ulid error2));
+            Assert.False(Ulid.TryParse(null, out _));
 
             //Invalid char
-            Assert.IsFalse(Ulid.TryParse("000*0000000000000000000000", out Ulid error3));
+            Assert.False(Ulid.TryParse("000*0000000000000000000000", out _));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestTryParseDefault()
         {
-            Assert.IsTrue(Ulid.TryParse("00000000000000000000000000", out Ulid valid0));
-            Assert.AreEqual(default(Ulid), valid0);
+            Assert.True(Ulid.TryParse("00000000000000000000000000", out Ulid valid0));
+            Assert.Equal(default, valid0);
         }
 
-        [TestMethod]
+        [Fact]
         private void TestTryParse()
         {
             for (int i = 0; i < TEST_COUNT; ++i)
             {
                 Ulid expected = ulids[i];
-                Assert.IsTrue(Ulid.TryParse(expected.ToString(), out Ulid actual));
-                Assert.AreEqual<Ulid>(expected, actual);
+                Assert.True(Ulid.TryParse(expected.ToString(), out Ulid actual));
+                Assert.Equal(expected, actual);
             }
         }
 
@@ -73,12 +72,12 @@ namespace CSharp.Ulid.Tests
             string sa = a.ToString();
             string sb = b.ToString();
 
-            Assert.AreEqual<int>(ULID_LENGTH, sa.Length);
-            Assert.AreEqual<int>(ULID_LENGTH, sb.Length);
+            Assert.Equal(ULID_LENGTH, sa.Length);
+            Assert.Equal(ULID_LENGTH, sb.Length);
 
             if (a.TimeStamp == b.TimeStamp)
             {
-                Assert.AreEqual(sa.Substring(0, 9), sb.Substring(0, 9));
+                Assert.Equal(sa.Substring(0, 9), sb.Substring(0, 9));
             }
         }
     }
