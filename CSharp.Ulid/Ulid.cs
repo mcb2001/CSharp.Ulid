@@ -84,7 +84,7 @@ namespace CSharp.Ulid
                 throw new ArgumentException($"Expected a length of {TIMESTAMP_LENGTH}, received {timestamp.Length}", nameof(timestamp));
             }
 
-            if(randomness.Length != RANDOMNESS_LENGTH)
+            if (randomness.Length != RANDOMNESS_LENGTH)
             {
                 throw new ArgumentException($"Expected a length of {RANDOMNESS_LENGTH}, received {randomness.Length}", nameof(randomness));
             }
@@ -108,6 +108,9 @@ namespace CSharp.Ulid
         }
 
         public Ulid(byte[] data)
+            : this(new ReadOnlySpan<byte>(data)) { }
+
+        public Ulid(ReadOnlySpan<byte> data)
         {
             const int DATA_LENGTH = 16;
 
@@ -327,25 +330,36 @@ namespace CSharp.Ulid
 
         public byte[] ToByteArray()
         {
-            return new byte[]
+            var destination = new byte[16];
+            TryWriteBytes(destination);
+            return destination;
+        }
+
+        public bool TryWriteBytes(Span<byte> destination)
+        {
+            if (destination.Length < 16)
             {
-                this.TimeStamp_0,
-                this.TimeStamp_1,
-                this.TimeStamp_2,
-                this.TimeStamp_3,
-                this.TimeStamp_4,
-                this.TimeStamp_5,
-                this.Randomness_0,
-                this.Randomness_1,
-                this.Randomness_2,
-                this.Randomness_3,
-                this.Randomness_4,
-                this.Randomness_5,
-                this.Randomness_6,
-                this.Randomness_7,
-                this.Randomness_8,
-                this.Randomness_9,
-            };
+                return false;
+            }
+
+            destination[0] = TimeStamp_0;
+            destination[1] = TimeStamp_1;
+            destination[2] = TimeStamp_2;
+            destination[3] = TimeStamp_3;
+            destination[4] = TimeStamp_4;
+            destination[5] = TimeStamp_5;
+            destination[6] = Randomness_0;
+            destination[7] = Randomness_1;
+            destination[8] = Randomness_2;
+            destination[9] = Randomness_3;
+            destination[10] = Randomness_4;
+            destination[11] = Randomness_5;
+            destination[12] = Randomness_6;
+            destination[13] = Randomness_7;
+            destination[14] = Randomness_8;
+            destination[15] = Randomness_9;
+
+            return true;
         }
 
         public bool Equals(Ulid other)
@@ -416,7 +430,7 @@ namespace CSharp.Ulid
             return false;
         }
 
-        public static explicit operator byte[] (Ulid ulid)
+        public static explicit operator byte[](Ulid ulid)
         {
             return ulid.ToByteArray();
         }

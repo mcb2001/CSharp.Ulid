@@ -1,5 +1,6 @@
-﻿using Xunit;
+﻿using System;
 using System.Threading;
+using Xunit;
 
 namespace CSharp.Ulid.Tests
 {
@@ -65,6 +66,61 @@ namespace CSharp.Ulid.Tests
                 Assert.True(Ulid.TryParse(expected.ToString(), out Ulid actual));
                 Assert.Equal(expected, actual);
             }
+        }
+
+        [Fact]
+        private void TestConstructFromByteArray()
+        {
+            byte[] array1 = Ulid.NewUlid().ToByteArray();
+            byte[] array2 = Ulid.NewUlid().ToByteArray();
+
+            Assert.Equal(array1, new Ulid(array1).ToByteArray());
+            Assert.Equal(array2, new Ulid(array2).ToByteArray());
+        }
+
+        [Fact]
+        private void TestConstructFromROS()
+        {
+            ReadOnlySpan<byte> span1 = Ulid.NewUlid().ToByteArray().AsSpan();
+            ReadOnlySpan<byte> span2 = Ulid.NewUlid().ToByteArray().AsSpan();
+
+            byte[] result1 = new Ulid(span1).ToByteArray();
+            byte[] result2 = new Ulid(span2).ToByteArray();
+
+            // We need to manually test byte-by-byte, because Span/ReadOnlySpan is not allowed as generic type (for Assert.Equal<T>()).
+            for (int i = 0; i < 16; ++i)
+            {
+                Assert.True(span1[i] == result1[i], $"Expected {span1[i]} at index {i} but found {result1[i]}");
+                Assert.True(span2[i] == result2[i], $"Expected {span2[i]} at index {i} but found {result2[i]}");
+            }
+        }
+
+        [Fact]
+        private void TestTryWriteBytesValid()
+        {
+            Ulid ulid = Ulid.NewUlid();
+            byte[] bytes = ulid.ToByteArray();
+            Span<byte> resultBuffer = stackalloc byte[100];
+
+            int offset = 55;
+            Assert.True(ulid.TryWriteBytes(resultBuffer.Slice(start: offset)));
+
+            // We need to manually test byte-by-byte, because Span/ReadOnlySpan is not allowed as generic type (for Assert.Equal<T>())..
+            for (int i = 0, j = offset; i < 16; ++i, ++j)
+            {
+                Assert.True(bytes[i] == resultBuffer[j], $"Expected {bytes[i]} at index {j} but found {resultBuffer[j]}");
+            }
+        }
+
+        [Fact]
+        private void TestTryWriteBytesInvalid()
+        {
+            Ulid ulid = Ulid.NewUlid();
+            byte[] bytes = ulid.ToByteArray();
+            Span<byte> resultBuffer = stackalloc byte[100];
+
+            int offset = 92; // invalid offset
+            Assert.False(ulid.TryWriteBytes(resultBuffer.Slice(start: offset)));
         }
 
         private void TestUlidAgainstOther(Ulid a, Ulid b)
