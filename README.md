@@ -2,9 +2,11 @@
 
 C# .NET Standard 2.0 port of [alizain/ulid](https://github.com/alizain/ulid)
 
+![CI](https://github.com/mcb2001/CSharp.Ulid/workflows/CI/badge.svg)
+
 ## Usage
 
-```
+```c#
 using CSharp.Ulid;
 
 internal class Program
@@ -39,6 +41,8 @@ internal class Program
 
         Ulid ulidFromBytes = new Ulid(new byte[] { 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 
+        Ulid ulidFromReadOnlySpan = new Ulid(new ReadOnlySpan<byte>(new byte[] { 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }));
+
         Ulid.TryParse("00000000000000000000000000", out Ulid ulitParsed);
 
         Ulid ulidDefault = default(Ulid);
@@ -46,6 +50,10 @@ internal class Program
         byte[] byteExplicit = (byte[])new Ulid();
 
         byte[] byteFromMethod = new Ulid().ToByteArray();
+
+        Span<byte> storage = stackalloc byte[100];
+        Span<byte> slicedSpan = storage.Slice(start: 55, length: 30);
+        Ulid.NewUlid().TryWriteBytes(slicedSpan); // if true, we should get 16-bytes of Ulid bytes written in `storage` starting at index 55.
 
         string stringRepresentation = new Ulid().ToString();
 
