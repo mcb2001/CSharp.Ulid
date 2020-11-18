@@ -2,9 +2,18 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <PackageId>ulid.net</PackageId>
+    <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
+    <Authors>Marc Barnholdt</Authors>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/mcb2001/CSharp.Ulid</RepositoryUrl>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+  <ItemGroup>
+    <None Include="..\LICENSE.txt" Pack="true" PackagePath="LICENSE.txt"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
 

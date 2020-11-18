@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [ master ]
+    tags: '*'
   pull_request:
     branches: [ master ]
 
@@ -12,12 +13,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.100
-    - name: Build
-      run: dotnet build --configuration Release
-    - name: Test
-      run: dotnet test --configuration Release
+      - name: Checkout
+        run: |
+          INITIAL_REF=$GITHUB_REF
+          REPO=${{ github.repository }}
+          PR_REPO=${{ github.event.pull_request.head.repo.full_name }}
+          if [ -n "$PR_REPO" ]; then
+            INITIAL_REF=$GITHUB_BASE_REF
+            REPO=$PR_REPO
+          fi
+          BRANCH_OR_TAG=${INITIAL_REF#refs/heads/}
+          BRANCH_OR_TAG=${BRANCH_OR_TAG#refs/tags/}
+          echo "BRANCH_OR_TAG=$BRANCH_OR_TAG" >> $GITHUB_ENV
+          git clone --single-branch --branch $BRANCH_OR_TAG --depth 1 https://${{ secrets.CLONE_TOKEN }}:x-oauth-basic@github.com/$REPO.git .
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.100
+
+      - name: Build
+        run: dotnet build --configuration Release
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: Pack
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: dotnet pack --configuration Release --output . -p:Version=$BRANCH_OR_TAG
+
+      - name: Create GitHub release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          artifacts="-a ulid.net.${BRANCH_OR_TAG}.nupkg"
+          hub release create $artifacts -m "$BRANCH_OR_TAG" "$BRANCH_OR_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish NuGet package
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: dotnet nuget push ulid.net.${BRANCH_OR_TAG}.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_ULID_API_KEY }}
