@@ -3,10 +3,12 @@
 C# .NET Standard 2.0 port of [alizain/ulid](https://github.com/alizain/ulid)
 
 ![CI](https://github.com/mcb2001/CSharp.Ulid/workflows/CI/badge.svg)
+[![Downloads](https://img.shields.io/nuget/v/ulid.net)](https://www.nuget.org/packages/ulid.net)
 
 ## Usage
 
 ```c#
+using System;
 using CSharp.Ulid;
 
 internal class Program
