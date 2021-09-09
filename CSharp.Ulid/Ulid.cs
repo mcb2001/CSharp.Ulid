@@ -6,6 +6,17 @@ namespace CSharp.Ulid
     public struct Ulid : IComparable, IComparable<Ulid>, IEquatable<Ulid>
     {
         private const int VALID_ULID_STRING_LENGTH = 26;
+        private static readonly char[] CrockfordsBase32 = new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z' };
+
+        private const int TIMESTAMP_LENGTH = 6;
+        private const int RANDOMNESS_LENGTH = 10;
+        private const int DATA_LENGTH = TIMESTAMP_LENGTH + RANDOMNESS_LENGTH;
+
+        private static long LastUsedTimeStamp /* = 0 */;
+        private static readonly byte[] LastUsedRandomness = new byte[RANDOMNESS_LENGTH];
+        private static readonly DateTime EPOCH = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+        private static readonly object LOCK = new object();
 
         public byte TimeStamp_0 { get; set; }
         public byte TimeStamp_1 { get; set; }
@@ -45,56 +56,19 @@ namespace CSharp.Ulid
         public byte Randomness_8 { get; set; }
         public byte Randomness_9 { get; set; }
 
-        private static readonly char[] CrockfordsBase32 = new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z' };
-
-        private static long LastUsedTimeStamp = 0;
-        private static readonly byte[] LastUsedRandomness = new byte[10];
-
-        private static readonly object LOCK = new object();
-
-        private static readonly DateTime EPOCH = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-
-        private const long TIMESTAMP_MASK_0 = 255;
-        private const long TIMESTAMP_MASK_1 = 65280;
-        private const long TIMESTAMP_MASK_2 = 16711680;
-        private const long TIMESTAMP_MASK_3 = 4278190080;
-        private const long TIMESTAMP_MASK_4 = 1095216660480;
-        private const long TIMESTAMP_MASK_5 = 280375465082880;
-
-        public Ulid(long timestamp, byte[] randomness)
-            : this(new byte[]
-            {
-                (byte)((timestamp & TIMESTAMP_MASK_5) >> 40),
-                (byte)((timestamp & TIMESTAMP_MASK_4) >> 32),
-                (byte)((timestamp & TIMESTAMP_MASK_3) >> 24),
-                (byte)((timestamp & TIMESTAMP_MASK_2) >> 16),
-                (byte)((timestamp & TIMESTAMP_MASK_1) >> 8),
-                (byte)((timestamp & TIMESTAMP_MASK_0) >> 0)},
-            randomness)
+        private Ulid(UlidTimestampHelper timestamp, ReadOnlySpan<byte> randomness)
         {
-        }
-
-        public Ulid(byte[] timestamp, byte[] randomness)
-        {
-            const int TIMESTAMP_LENGTH = 6;
-            const int RANDOMNESS_LENGTH = 10;
-
-            if (timestamp.Length != TIMESTAMP_LENGTH)
-            {
-                throw new ArgumentException($"Expected a length of {TIMESTAMP_LENGTH}, received {timestamp.Length}", nameof(timestamp));
-            }
-
             if (randomness.Length != RANDOMNESS_LENGTH)
             {
                 throw new ArgumentException($"Expected a length of {RANDOMNESS_LENGTH}, received {randomness.Length}", nameof(randomness));
             }
 
-            TimeStamp_0 = timestamp[0];
-            TimeStamp_1 = timestamp[1];
-            TimeStamp_2 = timestamp[2];
-            TimeStamp_3 = timestamp[3];
-            TimeStamp_4 = timestamp[4];
-            TimeStamp_5 = timestamp[5];
+            TimeStamp_0 = timestamp.TimeStamp_0;
+            TimeStamp_1 = timestamp.TimeStamp_1;
+            TimeStamp_2 = timestamp.TimeStamp_2;
+            TimeStamp_3 = timestamp.TimeStamp_3;
+            TimeStamp_4 = timestamp.TimeStamp_4;
+            TimeStamp_5 = timestamp.TimeStamp_5;
             Randomness_0 = randomness[0];
             Randomness_1 = randomness[1];
             Randomness_2 = randomness[2];
@@ -107,34 +81,22 @@ namespace CSharp.Ulid
             Randomness_9 = randomness[9];
         }
 
-        public Ulid(byte[] data)
-            : this(new ReadOnlySpan<byte>(data)) { }
+        public Ulid(long timestamp, ReadOnlySpan<byte> randomness) : this(new UlidTimestampHelper(timestamp), randomness)
+        {
+        }
+
+        public Ulid(ReadOnlySpan<byte> timestamp, ReadOnlySpan<byte> randomness) : this(new UlidTimestampHelper(timestamp), randomness)
+        {
+        }
 
         public Ulid(ReadOnlySpan<byte> data)
         {
-            const int DATA_LENGTH = 16;
-
             if (data.Length != DATA_LENGTH)
             {
                 throw new ArgumentException($"Expected a length of {DATA_LENGTH}, received {data.Length}", nameof(data));
             }
 
-            TimeStamp_0 = data[0];
-            TimeStamp_1 = data[1];
-            TimeStamp_2 = data[2];
-            TimeStamp_3 = data[3];
-            TimeStamp_4 = data[4];
-            TimeStamp_5 = data[5];
-            Randomness_0 = data[6];
-            Randomness_1 = data[7];
-            Randomness_2 = data[8];
-            Randomness_3 = data[9];
-            Randomness_4 = data[10];
-            Randomness_5 = data[11];
-            Randomness_6 = data[12];
-            Randomness_7 = data[13];
-            Randomness_8 = data[14];
-            Randomness_9 = data[15];
+            this = new Ulid(new UlidTimestampHelper(data.Slice(0, TIMESTAMP_LENGTH)), data.Slice(TIMESTAMP_LENGTH));
         }
 
         public static Ulid NewUlid()
@@ -159,36 +121,16 @@ namespace CSharp.Ulid
                 else
                 {
                     //Use Crypto random
-                    using (RNGCryptoServiceProvider RNG = new RNGCryptoServiceProvider())
+                    using (var rng = new RNGCryptoServiceProvider())
                     {
-                        RNG.GetBytes(randomness);
+                        rng.GetBytes(randomness);
                     }
 
                     LastUsedTimeStamp = timestamp;
                 }
                 
                 randomness.CopyTo(LastUsedRandomness, 0);
-
-                //Use explicit version, as the constructor have bounds checks
-                return new Ulid()
-                {
-                    TimeStamp_0 = (byte)((timestamp & TIMESTAMP_MASK_5) >> 40),
-                    TimeStamp_1 = (byte)((timestamp & TIMESTAMP_MASK_4) >> 32),
-                    TimeStamp_2 = (byte)((timestamp & TIMESTAMP_MASK_3) >> 24),
-                    TimeStamp_3 = (byte)((timestamp & TIMESTAMP_MASK_2) >> 16),
-                    TimeStamp_4 = (byte)((timestamp & TIMESTAMP_MASK_1) >> 8),
-                    TimeStamp_5 = (byte)((timestamp & TIMESTAMP_MASK_0) >> 0),
-                    Randomness_0 = randomness[0],
-                    Randomness_1 = randomness[1],
-                    Randomness_2 = randomness[2],
-                    Randomness_3 = randomness[3],
-                    Randomness_4 = randomness[4],
-                    Randomness_5 = randomness[5],
-                    Randomness_6 = randomness[6],
-                    Randomness_7 = randomness[7],
-                    Randomness_8 = randomness[8],
-                    Randomness_9 = randomness[9],
-                };
+                return new UlidTimestampHelper(timestamp).Create(randomness);
             }
         }
 
