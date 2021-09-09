@@ -50,7 +50,7 @@ namespace CSharp.Ulid
         private static long LastUsedTimeStamp = 0;
         private static readonly byte[] LastUsedRandomness = new byte[10];
 
-        private static readonly object LOCK = "THREAD_SAFE_LOCK";
+        private static readonly object LOCK = new object();
 
         private static readonly DateTime EPOCH = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
 
