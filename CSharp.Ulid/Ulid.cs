@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 
 namespace CSharp.Ulid
@@ -206,116 +207,14 @@ namespace CSharp.Ulid
             }
         }
 
-        public override string ToString()
+        public override string ToString() => StringExtensions.Create(VALID_ULID_STRING_LENGTH, new UlidStringHelper(this), (buffer, value) =>
         {
-            int index0 = (TimeStamp_0 & 224) >> 5;
-            char char0 = CrockfordsBase32[index0];
-
-            int index1 = TimeStamp_0 & 31;
-            char char1 = CrockfordsBase32[index1];
-
-            int index2 = (TimeStamp_1 & 248) >> 3;
-            char char2 = CrockfordsBase32[index2];
-
-            int index3 = ((TimeStamp_1 & 7) << 2) | ((TimeStamp_2 & 192) >> 6);
-            char char3 = CrockfordsBase32[index3];
-
-            int index4 = (TimeStamp_2 & 62) >> 1;
-            char char4 = CrockfordsBase32[index4];
-
-            int index5 = ((TimeStamp_2 & 1) << 4) | ((TimeStamp_3 & 240) >> 4);
-            char char5 = CrockfordsBase32[index5];
-
-            int index6 = ((TimeStamp_3 & 15) << 1) | ((TimeStamp_4 & 128) >> 7);
-            char char6 = CrockfordsBase32[index6];
-
-            int index7 = (TimeStamp_4 & 124) >> 2;
-            char char7 = CrockfordsBase32[index7];
-
-            int index8 = ((TimeStamp_4 & 3) << 3) | ((TimeStamp_5 & 224) >> 5);
-            char char8 = CrockfordsBase32[index8];
-
-            int index9 = TimeStamp_5 & 31;
-            char char9 = CrockfordsBase32[index9];
-
-            int index10 = (Randomness_0 & 248) >> 3;
-            char char10 = CrockfordsBase32[index10];
-
-            int index11 = ((Randomness_0 & 7) << 2) | ((Randomness_1 & 192) >> 6);
-            char char11 = CrockfordsBase32[index11];
-
-            int index12 = (Randomness_1 & 62) >> 1;
-            char char12 = CrockfordsBase32[index12];
-
-            int index13 = ((Randomness_1 & 1) << 4) | ((Randomness_2 & 240) >> 4);
-            char char13 = CrockfordsBase32[index13];
-
-            int index14 = ((Randomness_2 & 15) << 1) | ((Randomness_3 & 128) >> 7);
-            char char14 = CrockfordsBase32[index14];
-
-            int index15 = (Randomness_3 & 124) >> 2;
-            char char15 = CrockfordsBase32[index15];
-
-            int index16 = ((Randomness_3 & 3) << 3) | ((Randomness_4 & 224) >> 5);
-            char char16 = CrockfordsBase32[index16];
-
-            int index17 = Randomness_4 & 31;
-            char char17 = CrockfordsBase32[index17];
-
-            int index18 = (Randomness_5 & 248) >> 3;
-            char char18 = CrockfordsBase32[index18];
-
-            int index19 = ((Randomness_5 & 7) << 2) | ((Randomness_6 & 192) >> 6);
-            char char19 = CrockfordsBase32[index19];
-
-            int index20 = (Randomness_6 & 62) >> 1;
-            char char20 = CrockfordsBase32[index20];
-
-            int index21 = ((Randomness_6 & 1) << 4) | ((Randomness_7 & 240) >> 4);
-            char char21 = CrockfordsBase32[index21];
-
-            int index22 = ((Randomness_7 & 15) << 1) | ((Randomness_8 & 128) >> 7);
-            char char22 = CrockfordsBase32[index22];
-
-            int index23 = (Randomness_8 & 124) >> 2;
-            char char23 = CrockfordsBase32[index23];
-
-            int index24 = ((Randomness_8 & 3) << 3) | ((Randomness_9 & 224) >> 5);
-            char char24 = CrockfordsBase32[index24];
-
-            int index25 = Randomness_9 & 31;
-            char char25 = CrockfordsBase32[index25];
-
-            return new string(new char[]
+            for (int index = 0; index < buffer.Length; index++)
             {
-                char0,
-                char1,
-                char2,
-                char3,
-                char4,
-                char5,
-                char6,
-                char7,
-                char8,
-                char9,
-                char10,
-                char11,
-                char12,
-                char13,
-                char14,
-                char15,
-                char16,
-                char17,
-                char18,
-                char19,
-                char20,
-                char21,
-                char22,
-                char23,
-                char24,
-                char25,
-            });
-        }
+                int i = value[index];
+                buffer[index] = CrockfordsBase32[i];
+            }
+        });
 
         public byte[] ToByteArray()
         {
