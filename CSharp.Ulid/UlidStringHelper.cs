@@ -41,5 +41,25 @@ namespace CSharp.Ulid
             25 => Value.Randomness_9 & 31,
             _ => throw new ArgumentOutOfRangeException(nameof(index)),
         };
+
+        public static Ulid FromString(ReadOnlySpan<int> index) => new Ulid
+        {
+            TimeStamp_0 = (byte)(index[0] << 5 | index[1]),
+            TimeStamp_1 = (byte)(index[2] << 3 | index[3] >> 2),
+            TimeStamp_2 = (byte)(index[3] << 6 | index[4] << 1 | index[5] >> 4),
+            TimeStamp_3 = (byte)(index[5] << 4 | index[6] >> 1),
+            TimeStamp_4 = (byte)(index[6] << 7 | index[7] << 2 | index[8] >> 3),
+            TimeStamp_5 = (byte)(index[8] << 5 | index[9]),
+            Randomness_0 = (byte)(index[10] << 3 | index[11] >> 2),
+            Randomness_1 = (byte)(index[11] << 6 | index[12] << 1 | index[13] >> 4),
+            Randomness_2 = (byte)(index[13] << 4 | index[14] >> 1),
+            Randomness_3 = (byte)(index[14] << 7 | index[15] << 2 | index[16] >> 3),
+            Randomness_4 = (byte)(index[16] << 5 | index[17]),
+            Randomness_5 = (byte)(index[18] << 3 | index[19] >> 2),
+            Randomness_6 = (byte)(index[19] << 6 | index[20] << 1 | index[21] >> 4),
+            Randomness_7 = (byte)(index[21] << 4 | index[22] >> 1),
+            Randomness_8 = (byte)(index[22] << 7 | index[23] << 2 | index[24] >> 3),
+            Randomness_9 = (byte)(index[24] << 5 | index[25]),
+        };
     }
 }
