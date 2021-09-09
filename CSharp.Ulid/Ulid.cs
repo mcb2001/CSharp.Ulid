@@ -148,13 +148,13 @@ namespace CSharp.Ulid
                 DateTime now = DateTime.UtcNow;
                 long timestamp = (long)(now - EPOCH).TotalMilliseconds;
 
-                byte[] randomness = new byte[10];
+                byte[] randomness = new byte[LastUsedRandomness.Length];
 
                 if (timestamp == LastUsedTimeStamp)
                 {
                     //Increment by one
-                    byte[] lastUsedRandomness = AddOne(LastUsedRandomness);
-                    lastUsedRandomness.CopyTo(randomness, 0);
+                    LastUsedRandomness.CopyTo(randomness, 0);
+                    AddOne(randomness);
                 }
                 else
                 {
@@ -163,9 +163,10 @@ namespace CSharp.Ulid
                     {
                         RNG.GetBytes(randomness);
                     }
-                }
 
-                LastUsedTimeStamp = timestamp;
+                    LastUsedTimeStamp = timestamp;
+                }
+                
                 randomness.CopyTo(LastUsedRandomness, 0);
 
                 //Use explicit version, as the constructor have bounds checks
@@ -191,29 +192,17 @@ namespace CSharp.Ulid
             }
         }
 
-        private static byte[] AddOne(byte[] bytes)
+        private static void AddOne(byte[] bytes)
         {
-            byte[] data = new byte[bytes.Length];
-            bytes.CopyTo(data, 0);
-            AddOne(data, bytes.Length - 1);
-            return data;
-        }
+            for (int index = bytes.Length - 1; index >= 0; index--)
+            {
+                if (bytes[index] < byte.MaxValue)
+                {
+                    ++bytes[index];
+                    return;
+                }
 
-        private static void AddOne(byte[] data, int index)
-        {
-            if (index < 0)
-            {
-                throw new OverflowException($"{nameof(LastUsedRandomness)} overflowed within same millisecond");
-            }
-
-            if (data[index] == byte.MaxValue)
-            {
-                data[index] = 0;
-                AddOne(data, index - 1);
-            }
-            else
-            {
-                ++data[index];
+                bytes[index] = 0;
             }
         }
 
