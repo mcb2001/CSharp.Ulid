@@ -273,7 +273,7 @@ namespace CSharp.Ulid
             return ulid.ToByteArray();
         }
 
-        public static bool TryParse(ReadOnlySpan<char> input, out Ulid ulid)
+        public static bool TryParseSpan(ReadOnlySpan<char> input, out Ulid ulid)
         {
             if (input.Length != VALID_ULID_STRING_LENGTH)
             {
@@ -308,6 +308,6 @@ namespace CSharp.Ulid
             return true;
         }
 
-        public static bool TryParse(string input, out Ulid ulid) => TryParse(input.AsSpan(), out ulid);
+        public static bool TryParse(string input, out Ulid ulid) => TryParseSpan(input.AsSpan(), out ulid);
     }
 }
