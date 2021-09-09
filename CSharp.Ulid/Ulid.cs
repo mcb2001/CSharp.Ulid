@@ -272,7 +272,16 @@ namespace CSharp.Ulid
 
         public int CompareTo(Ulid other)
         {
-            return this.ToString().CompareTo(other.ToString());
+            int result = 0, index = 0;
+            var thisHelper = new UlidStringHelper(this);
+            var otherHelper = new UlidStringHelper(other);
+            while (result == 0 && index < VALID_ULID_STRING_LENGTH)
+            {
+                result = thisHelper[index].CompareTo(otherHelper[index]);
+                ++index;
+            }
+
+            return result;
         }
 
         public int CompareTo(object obj)
