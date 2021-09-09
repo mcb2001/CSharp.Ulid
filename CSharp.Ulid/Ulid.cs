@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 
 namespace CSharp.Ulid
@@ -209,7 +208,7 @@ namespace CSharp.Ulid
 
         public override string ToString() => StringExtensions.Create(VALID_ULID_STRING_LENGTH, new UlidStringHelper(this), (buffer, value) =>
         {
-            for (int index = 0; index < buffer.Length; index++)
+            for (int index = 0; index < buffer.Length; ++index)
             {
                 int i = value[index];
                 buffer[index] = CrockfordsBase32[i];
@@ -332,27 +331,18 @@ namespace CSharp.Ulid
             return ulid.ToByteArray();
         }
 
-        public static bool TryParse(string input, out Ulid ulid)
+        public static bool TryParse(ReadOnlySpan<char> input, out Ulid ulid)
         {
-            if (input is null)
-            {
-                ulid = default;
-                return false;
-            }
-
             if (input.Length != VALID_ULID_STRING_LENGTH)
             {
                 ulid = default;
                 return false;
             }
 
-            input = input.ToUpperInvariant();
-
-            int[] index = new int[VALID_ULID_STRING_LENGTH];
-
-            for (int i = 0; i < VALID_ULID_STRING_LENGTH; ++i)
+            Span<int> index = stackalloc int[VALID_ULID_STRING_LENGTH];
+            for (int i = 0; i < input.Length; ++i)
             {
-                char c = input[i];
+                char c = char.ToUpperInvariant(input[i]);
                 bool found = false;
 
                 for (int v = 0; v < CrockfordsBase32.Length; ++v)
@@ -416,5 +406,7 @@ namespace CSharp.Ulid
 
             return true;
         }
+
+        public static bool TryParse(string input, out Ulid ulid) => TryParse(input.AsSpan(), out ulid);
     }
 }
