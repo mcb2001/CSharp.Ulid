@@ -35,9 +35,6 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release
 
-      - name: Test
-        run: dotnet test --configuration Release
-
       - name: Pack
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: dotnet pack --configuration Release --output . -p:Version=$BRANCH_OR_TAG
