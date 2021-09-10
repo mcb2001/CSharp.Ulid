@@ -1,12 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+	<LangVersion>8.0</LangVersion>
     <PackageId>ulid.net</PackageId>
     <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
     <Authors>Marc Barnholdt</Authors>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/mcb2001/CSharp.Ulid</RepositoryUrl>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

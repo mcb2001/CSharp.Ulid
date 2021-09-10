@@ -116,7 +116,6 @@ namespace CSharp.Ulid.Tests
         private void TestTryWriteBytesInvalid()
         {
             Ulid ulid = Ulid.NewUlid();
-            byte[] bytes = ulid.ToByteArray();
             Span<byte> resultBuffer = stackalloc byte[100];
 
             int offset = 92; // invalid offset
