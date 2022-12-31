@@ -16,17 +16,9 @@ namespace CSharp.Ulid
             if (action is null) throw new ArgumentNullException(nameof(action));
             if (length == 0) return string.Empty;
 
-            unsafe
-            {
-                var str = new string('\0', length);
-                fixed (char* chars = str)
-                {
-                    var span = new Span<char>(chars, length);
-                    action(span, state);
-                }
-
-                return str;
-            }
+            var chars = new char[length];
+            action(chars, state);
+            return new string(chars);
 #else
             return string.Create(length, state, action);
 #endif
