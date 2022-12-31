@@ -27,10 +27,12 @@ jobs:
           echo "BRANCH_OR_TAG=$BRANCH_OR_TAG" >> $GITHUB_ENV
           git clone --single-branch --branch $BRANCH_OR_TAG --depth 1 https://${{ secrets.CLONE_TOKEN }}:x-oauth-basic@github.com/$REPO.git .
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 5.0.100
+          dotnet-version: |
+            3.1.x
+            7.0.x
 
       - name: Build
         run: dotnet build --configuration Release
