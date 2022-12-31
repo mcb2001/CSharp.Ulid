@@ -2,8 +2,6 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-#if NETSTANDARD2_0_OR_GREATER
-
 namespace CSharp.Ulid
 {
     internal static class StringExtensions
@@ -13,6 +11,7 @@ namespace CSharp.Ulid
 #endif
         public static string Create<TState>(int length, TState state, SpanAction<char, TState> action)
         {
+#if NETSTANDARD2_0
             if (length < 0) throw new ArgumentOutOfRangeException(nameof(length));
             if (action is null) throw new ArgumentNullException(nameof(action));
             if (length == 0) return string.Empty;
@@ -20,8 +19,9 @@ namespace CSharp.Ulid
             var chars = new char[length];
             action(chars, state);
             return new string(chars);
+#else
+            return string.Create(length, state, action);
+#endif
         }
     }
 }
-
-#endif
