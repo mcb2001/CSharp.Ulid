@@ -146,6 +146,7 @@ namespace CSharp.Ulid
 
                 bytes[index] = 0;
             }
+            throw new Exception("No more randomness available. Too many IDs generated this millisecond.");
         }
 
         public override string ToString() => StringExtensions.Create(VALID_ULID_STRING_LENGTH, new UlidStringHelper(this), (buffer, value) =>
