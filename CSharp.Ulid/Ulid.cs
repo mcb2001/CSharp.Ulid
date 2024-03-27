@@ -110,12 +110,20 @@ namespace CSharp.Ulid
                 DateTime now = DateTime.UtcNow;
                 long timestamp = (long)(now - EPOCH).TotalMilliseconds;
 
+#if NETSTANDARD2_1_OR_GREATER
+                Span<byte> randomness = stackalloc byte[LastUsedRandomness.Length];
+#else
                 byte[] randomness = new byte[LastUsedRandomness.Length];
+#endif
 
                 if (timestamp == LastUsedTimeStamp)
                 {
                     //Increment by one
+#if NETSTANDARD2_1_OR_GREATER
+                    LastUsedRandomness.AsSpan().CopyTo(randomness);
+#else
                     LastUsedRandomness.CopyTo(randomness, 0);
+#endif
                     AddOne(randomness);
                 }
                 else
@@ -128,13 +136,17 @@ namespace CSharp.Ulid
 
                     LastUsedTimeStamp = timestamp;
                 }
-                
+
+#if NETSTANDARD2_1_OR_GREATER
+                randomness.CopyTo(LastUsedRandomness);
+#else
                 randomness.CopyTo(LastUsedRandomness, 0);
+#endif
                 return new UlidTimestampHelper(timestamp).Create(randomness);
             }
         }
 
-        private static void AddOne(byte[] bytes)
+        private static void AddOne(Span<byte> bytes)
         {
             for (int index = bytes.Length - 1; index >= 0; index--)
             {
